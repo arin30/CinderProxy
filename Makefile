@@ -1,6 +1,7 @@
 CC ?= cc
 CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -O2 -pthread
 CPPFLAGS ?= -D_POSIX_C_SOURCE=200809L -Iinclude
+FUZZ_CC ?= clang
 BUILD := build
 
 .PHONY: all clean test sanitize fuzz fuzz-build
@@ -24,7 +25,7 @@ sanitize: | $(BUILD)
 	./$(BUILD)/test_http_san
 
 fuzz-build: | $(BUILD)
-	clang $(CPPFLAGS) -std=c11 -O1 -g -fsanitize=fuzzer,address,undefined tests/fuzz_http.c src/http.c -o $(BUILD)/fuzz_http
+	$(FUZZ_CC) $(CPPFLAGS) -std=c11 -O1 -g -fsanitize=fuzzer,address,undefined tests/fuzz_http.c src/http.c -o $(BUILD)/fuzz_http
 
 fuzz: fuzz-build
 	./$(BUILD)/fuzz_http -max_total_time=20
