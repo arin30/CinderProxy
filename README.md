@@ -20,14 +20,15 @@ The project is intentionally smaller than production proxies such as nginx, HAPr
 - duplicate `Host` header rejection
 - `Content-Length` validation
 - unsupported transfer encoding rejection
-- path traversal checks
+- URI normalization checks for literal and percent-encoded traversal patterns
+- rejection of encoded slashes, backslashes, NUL/control bytes, fragments, and malformed percent escapes in request paths
 - hop-by-hop header filtering
 - `X-Forwarded-For` insertion
 - socket timeouts and backend failure handling
 - AddressSanitizer and UndefinedBehaviorSanitizer testing
 - libFuzzer harness for the HTTP parser
 - end-to-end integration testing
-- repeatable local throughput and latency benchmark
+- repeatable local throughput and latency benchmarks
 
 ## Build
 
@@ -138,7 +139,11 @@ The current implementation accepts bodies up to 1 MB. Chunked request bodies are
 
 ## Defensive request handling
 
-The parser rejects malformed header names, control characters in header values, duplicate `Host` headers, invalid or conflicting request metadata, unsupported transfer encodings, oversized requests, and obvious path traversal patterns.
+The parser rejects malformed header names, control characters in header values, duplicate `Host` headers, invalid or conflicting request metadata, unsupported transfer encodings, oversized requests, and unsafe request targets.
+
+Request paths are checked a segment at a time after percent decoding. Dot segments such as `.` and `..` are rejected even when they are partially or fully encoded. Encoded path separators, backslashes, NUL/control bytes, malformed percent escapes, and URI fragments are also rejected to reduce ambiguity between the proxy and downstream servers.
+
+The query string is not treated as a filesystem path, so values such as `?q=../example` remain valid.
 
 Before forwarding a valid request, CinderProxy removes hop-by-hop headers and adds its own `X-Forwarded-For` value.
 
@@ -208,25 +213,32 @@ latency_p99_ms: 56.317
 
 These numbers are a local development benchmark, not a production capacity claim. Results vary by hardware, operating system, backend behavior, and benchmark configuration.
 
-The workload can be adjusted with environment variables:
+For a more stable result, run the benchmark five times and summarize the median throughput and p95 latency:
 
 ```bash
-BENCH_REQUESTS=5000 BENCH_CONCURRENCY=50 make benchmark
+make benchmark-suite
+```
+
+The number of runs can be changed with `BENCH_RUNS`, and the underlying workload can still be adjusted with `BENCH_REQUESTS` and `BENCH_CONCURRENCY`:
+
+```bash
+BENCH_RUNS=7 BENCH_REQUESTS=5000 BENCH_CONCURRENCY=50 make benchmark-suite
 ```
 
 ## Project layout
 
 ```text
-include/http.h             HTTP request structures and parser interface
-src/http.c                 HTTP parsing and request forwarding logic
-src/cinderproxy.c          sockets, TLS, workers, health checks, streaming, and rate limiting
-tests/test_http.c          parser unit tests
-tests/fuzz_http.c          libFuzzer entry point
-tests/test_integration.py  end-to-end proxy test
-tools/benchmark.py         local throughput and latency benchmark
-examples/backend.py        backend used for local and integration testing
+include/http.h               HTTP request structures and parser interface
+src/http.c                   HTTP parsing, URI checks, and forwarding logic
+src/cinderproxy.c            sockets, TLS, workers, health checks, streaming, and rate limiting
+tests/test_http.c            parser and URI-safety unit tests
+tests/fuzz_http.c            libFuzzer entry point
+tests/test_integration.py    end-to-end proxy test
+tools/benchmark.py           single-run throughput and latency benchmark
+tools/benchmark_suite.py     multi-run benchmark summary
+examples/backend.py          backend used for local and integration testing
 ```
 
 ## Next steps
 
-The main areas I still want to explore are connection reuse, stricter URI normalization, and support for multiple backend targets.
+The main areas I still want to explore are connection reuse and support for multiple backend targets.
