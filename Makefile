@@ -7,7 +7,7 @@ TLS_CPPFLAGS ?= $(if $(OPENSSL_PREFIX),-I$(OPENSSL_PREFIX)/include,)
 TLS_LDFLAGS ?= $(if $(OPENSSL_PREFIX),-L$(OPENSSL_PREFIX)/lib,) -lssl -lcrypto
 BUILD := build
 
-.PHONY: all clean test integration sanitize fuzz fuzz-build tls benchmark
+.PHONY: all clean test integration sanitize fuzz fuzz-build tls benchmark benchmark-suite
 
 all: $(BUILD)/cinderproxy
 
@@ -33,6 +33,9 @@ integration: $(BUILD)/cinderproxy
 
 benchmark: $(BUILD)/cinderproxy
 	python3 tools/benchmark.py
+
+benchmark-suite: $(BUILD)/cinderproxy
+	python3 tools/benchmark_suite.py
 
 sanitize: | $(BUILD)
 	$(CC) $(CPPFLAGS) -std=c11 -Wall -Wextra -Wpedantic -O1 -g -fsanitize=address,undefined tests/test_http.c src/http.c -o $(BUILD)/test_http_san

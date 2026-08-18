@@ -21,12 +21,44 @@ static const char *find_crlf(const char *s,const char *end){
 static int copy_span(char *dst,size_t cap,const char *a,const char *b){
   size_t n=(size_t)(b-a); if(n+1>cap) return -1; memcpy(dst,a,n); dst[n]='\0'; return 0;
 }
+static int hex_value(unsigned char c){
+  if(c>='0'&&c<='9') return c-'0';
+  if(c>='a'&&c<='f') return c-'a'+10;
+  if(c>='A'&&c<='F') return c-'A'+10;
+  return -1;
+}
 static int safe_target(const char *t){
   if(!t[0]||t[0]!='/') return 0;
-  if(strchr(t,'\\')) return 0;
-  if(strstr(t,"/../")||strstr(t,"/%2e%2e/")||strstr(t,"/%2E%2E/")) return 0;
-  size_t n=strlen(t);
-  if(n>=3 && strcmp(t+n-3,"/..")==0) return 0;
+
+  char segment[1024];
+  size_t seg_len=0;
+  for(size_t i=1;t[i]&&t[i]!='?';i++){
+    unsigned char c=(unsigned char)t[i];
+    if(c=='#'||c=='\\'||c<32||c==127) return 0;
+
+    if(c=='%'){
+      if(!t[i+1]||!t[i+2]) return 0;
+      int hi=hex_value((unsigned char)t[i+1]);
+      int lo=hex_value((unsigned char)t[i+2]);
+      if(hi<0||lo<0) return 0;
+      c=(unsigned char)((hi<<4)|lo);
+      i+=2;
+      if(c==0||c=='/'||c=='\\'||c<32||c==127) return 0;
+    }
+
+    if(c=='/'){
+      if((seg_len==1&&segment[0]=='.') ||
+         (seg_len==2&&segment[0]=='.'&&segment[1]=='.')) return 0;
+      seg_len=0;
+      continue;
+    }
+
+    if(seg_len+1>=sizeof(segment)) return 0;
+    segment[seg_len++]=(char)c;
+  }
+
+  if((seg_len==1&&segment[0]=='.') ||
+     (seg_len==2&&segment[0]=='.'&&segment[1]=='.')) return 0;
   return 1;
 }
 static int hop(const char *name){
