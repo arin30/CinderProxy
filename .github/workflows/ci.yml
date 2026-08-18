@@ -9,13 +9,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install TLS dependency
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+
       - name: Build
         run: make
+
+      - name: Build TLS target
+        run: make tls
+
       - name: Run parser tests
         run: make test
+
       - name: Run proxy integration test
         run: make integration
+
       - name: Run sanitizer tests
         run: make sanitize
+
       - name: Build fuzz harness
         run: make fuzz-build
