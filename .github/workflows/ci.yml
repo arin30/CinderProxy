@@ -13,3 +13,7 @@ jobs:
         run: make
       - name: Run tests
         run: make test
+      - name: Run sanitizer tests
+        run: make sanitize
+      - name: Build fuzz harness
+        run: make fuzz-build
