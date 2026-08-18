@@ -37,6 +37,7 @@ static int safe_target(const char *t){
     if(c=='#'||c=='\\'||c<32||c==127) return 0;
 
     if(c=='%'){
+      if(!t[i+1]||!t[i+2]) return 0;
       int hi=hex_value((unsigned char)t[i+1]);
       int lo=hex_value((unsigned char)t[i+2]);
       if(hi<0||lo<0) return 0;
