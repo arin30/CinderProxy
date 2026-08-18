@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -30,4 +31,5 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
-HTTPServer(("127.0.0.1", 9000), Handler).serve_forever()
+port = int(sys.argv[1]) if len(sys.argv) > 1 else 9000
+HTTPServer(("127.0.0.1", port), Handler).serve_forever()
