@@ -2,56 +2,70 @@
 
 CinderProxy is a small reverse proxy written in C.
 
-I built it to get more hands on with socket programming, HTTP request handling, concurrency, and defensive input validation. It accepts HTTP/1.1 requests from clients, validates them, applies a few basic protections, forwards accepted requests to a backend server, and streams the response back to the client.
+I built it to get more hands on with socket programming, HTTP request handling, concurrency, and defensive input validation. The proxy accepts HTTP/1.0 and HTTP/1.1 requests, validates them, applies basic protections, forwards accepted traffic to a backend server, and returns the backend response to the client.
 
-This is not meant to replace nginx, HAProxy, or Envoy. I wanted the code to stay small enough that I could understand the full request path while still dealing with untrusted input and real network behavior.
+The project is intentionally smaller than production proxies such as nginx, HAProxy, or Envoy. I wanted the codebase to stay understandable while still dealing with real network behavior and attacker-controlled input.
 
-## Current features
+## Features
 
-* HTTP/1.0 and HTTP/1.1 request parsing
-* reverse proxying to a configurable backend
-* bounded worker pool instead of one thread per connection
-* fixed-capacity work queue with `503 Service Unavailable` on overload
-* periodic backend health checks
-* request-body streaming in fixed-size chunks
-* request header size limits
-* path traversal checks
-* malformed header rejection
-* duplicate `Host` header rejection
-* `Content-Length` validation
-* unsupported transfer encoding rejection
-* per-IP rate limiting
-* socket timeouts
-* hop-by-hop header filtering
-* `X-Forwarded-For` insertion
-* simple request logging
-* backend failure handling
-* AddressSanitizer and UndefinedBehaviorSanitizer test target
-* libFuzzer harness for the HTTP parser
-* end-to-end integration test
+- HTTP/1.0 and HTTP/1.1 parsing
+- configurable reverse proxying
+- optional TLS termination with OpenSSL
+- bounded worker pool and fixed-capacity connection queue
+- per-IP rate limiting
+- periodic backend health checks
+- request body streaming in 16 KB chunks
+- request and header size limits
+- malformed header rejection
+- duplicate `Host` header rejection
+- `Content-Length` validation
+- unsupported transfer encoding rejection
+- path traversal checks
+- hop-by-hop header filtering
+- `X-Forwarded-For` insertion
+- socket timeouts and backend failure handling
+- AddressSanitizer and UndefinedBehaviorSanitizer testing
+- libFuzzer harness for the HTTP parser
+- end-to-end integration testing
+- repeatable local throughput and latency benchmark
 
 ## Build
 
-On macOS or Linux:
+Build the normal HTTP proxy:
 
 ```bash
 make
 ```
 
-The binary is written to `build/cinderproxy`.
+The binary is written to:
 
-## Run it locally
+```text
+build/cinderproxy
+```
 
-Start the included backend in one terminal:
+Build the TLS-enabled version:
+
+```bash
+make tls
+```
+
+On macOS, the Makefile automatically uses Homebrew's `openssl@3` path when available.
+
+## Run locally
+
+Start the included backend:
 
 ```bash
 python3 examples/backend.py
 ```
 
-Then start CinderProxy in another terminal:
+Start CinderProxy in another terminal:
 
 ```bash
-./build/cinderproxy --listen 8080 --backend-host 127.0.0.1 --backend-port 9000
+./build/cinderproxy \
+  --listen 8080 \
+  --backend-host 127.0.0.1 \
+  --backend-port 9000
 ```
 
 Send a request through the proxy:
@@ -60,9 +74,40 @@ Send a request through the proxy:
 curl -v http://127.0.0.1:8080/hello
 ```
 
-You should receive a response from the backend through CinderProxy.
+## TLS
 
-## Options
+The TLS build terminates HTTPS at CinderProxy and forwards the decrypted HTTP request to the configured backend.
+
+For local testing, generate a temporary self-signed certificate:
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout key.pem \
+  -out cert.pem \
+  -days 1 \
+  -subj "/CN=localhost"
+```
+
+Then start the TLS-enabled proxy:
+
+```bash
+./build/cinderproxy-tls \
+  --listen 8443 \
+  --backend-host 127.0.0.1 \
+  --backend-port 9000 \
+  --tls-cert cert.pem \
+  --tls-key key.pem
+```
+
+Test it with:
+
+```bash
+curl -k https://127.0.0.1:8443/hello
+```
+
+TLS is optional. The normal `make` target does not require OpenSSL.
+
+## Configuration
 
 ```text
 --listen PORT
@@ -73,62 +118,47 @@ You should receive a response from the backend through CinderProxy.
 --rate-window SECONDS
 --workers THREADS
 --health-interval SECONDS
+--tls-cert FILE
+--tls-key FILE
 ```
 
-For example:
-
-```bash
-./build/cinderproxy \
-  --listen 8080 \
-  --backend-host 127.0.0.1 \
-  --backend-port 9000 \
-  --rate-limit 30 \
-  --rate-window 10 \
-  --workers 8 \
-  --health-interval 5
-```
-
-The worker pool defaults to eight threads. Accepted client connections are placed into a bounded queue. If the queue is full, the proxy rejects the new connection with a 503 response instead of creating more threads indefinitely.
+The worker pool defaults to eight threads. Accepted connections are placed into a bounded queue. If the queue is full, the proxy rejects additional work instead of creating threads indefinitely.
 
 ## Backend health checks
 
-CinderProxy runs a small background health-check thread. Every few seconds it tries to open a TCP connection to the configured backend.
+A background thread periodically attempts to connect to the configured backend. If the backend is unavailable, the proxy returns `503 Backend Unavailable` rather than repeatedly attempting to forward requests to a server it already knows is down.
 
-If the backend cannot be reached, new requests are rejected with `503 Backend Unavailable` instead of being forwarded to a server the proxy already knows is down. When the backend becomes reachable again, requests are allowed through normally.
-
-The check interval defaults to five seconds and can be changed with `--health-interval`.
+When the backend becomes reachable again, normal forwarding resumes automatically.
 
 ## Request body streaming
 
-Request headers are still read and validated before forwarding, but request bodies are no longer buffered in full before the backend sees them.
+CinderProxy validates request headers first, then forwards request bodies in 16 KB chunks instead of buffering the entire body in memory.
 
-After the headers are accepted, the proxy forwards the body in 16 KB chunks until the declared `Content-Length` has been sent. This keeps memory usage much more predictable for larger POST requests.
+The current implementation accepts bodies up to 1 MB. Chunked request bodies are intentionally rejected because chunked decoding has not been implemented yet.
 
-The proxy still limits request bodies to 1 MB for now. Chunked request bodies are not supported yet and are rejected instead of being partially interpreted.
+## Defensive request handling
 
-## Request handling
+The parser rejects malformed header names, control characters in header values, duplicate `Host` headers, invalid or conflicting request metadata, unsupported transfer encodings, oversized requests, and obvious path traversal patterns.
 
-The parser rejects a few cases that are easy to get wrong when processing raw HTTP, including malformed header names, control characters in header values, duplicate `Host` headers, invalid `Content-Length` values, unsupported transfer encodings, and obvious path traversal patterns.
-
-Before forwarding a request, the proxy removes hop-by-hop headers and adds its own `X-Forwarded-For` value.
+Before forwarding a valid request, CinderProxy removes hop-by-hop headers and adds its own `X-Forwarded-For` value.
 
 ## Tests
 
-Run the parser tests with:
+Run the parser tests:
 
 ```bash
 make test
 ```
 
-Run the end-to-end proxy test with:
+Run the full proxy integration test:
 
 ```bash
 make integration
 ```
 
-The integration test starts the example backend and CinderProxy, verifies a normal GET, sends a 256 KB POST through the streaming path, stops the backend, and checks that the proxy begins returning 503 responses after the health check notices the outage.
+The integration test verifies a normal GET request, streams a 256 KB POST through the proxy, shuts down the backend, and confirms the health checker causes the proxy to return a 503 response.
 
-Run the parser tests under AddressSanitizer and UndefinedBehaviorSanitizer with:
+Run parser tests with AddressSanitizer and UndefinedBehaviorSanitizer:
 
 ```bash
 make sanitize
@@ -136,7 +166,9 @@ make sanitize
 
 ## Fuzzing
 
-The HTTP parser also has a libFuzzer harness. On a machine with Clang installed:
+The HTTP parser has a libFuzzer harness because it directly handles untrusted network input.
+
+On Linux with Clang:
 
 ```bash
 make fuzz
@@ -148,25 +180,53 @@ On macOS with Homebrew LLVM:
 make fuzz FUZZ_CC="$(brew --prefix llvm)/bin/clang"
 ```
 
-That builds the parser with libFuzzer, AddressSanitizer, and UndefinedBehaviorSanitizer and feeds it generated byte sequences for about 20 seconds.
+The default fuzz run lasts about 20 seconds and is built with libFuzzer, AddressSanitizer, and UndefinedBehaviorSanitizer.
+
+## Benchmarking
+
+Run the local benchmark with:
+
+```bash
+make benchmark
+```
+
+The default benchmark sends 1,000 requests using 20 concurrent clients and reports throughput plus average, p50, p95, and p99 latency.
+
+A local macOS run produced:
+
+```text
+requests:       1000
+concurrency:    20
+successful:     1000
+failed:         0
+requests_sec:   5682.6
+latency_avg_ms: 2.827
+latency_p50_ms: 0.999
+latency_p95_ms: 3.599
+latency_p99_ms: 56.317
+```
+
+These numbers are a local development benchmark, not a production capacity claim. Results vary by hardware, operating system, backend behavior, and benchmark configuration.
+
+The workload can be adjusted with environment variables:
+
+```bash
+BENCH_REQUESTS=5000 BENCH_CONCURRENCY=50 make benchmark
+```
 
 ## Project layout
 
 ```text
 include/http.h             HTTP request structures and parser interface
-src/http.c                 parser and forwarding logic
-src/cinderproxy.c          sockets, workers, health checks, streaming, and rate limiting
-tests/test_http.c          parser tests
+src/http.c                 HTTP parsing and request forwarding logic
+src/cinderproxy.c          sockets, TLS, workers, health checks, streaming, and rate limiting
+tests/test_http.c          parser unit tests
 tests/fuzz_http.c          libFuzzer entry point
 tests/test_integration.py  end-to-end proxy test
-examples/backend.py        local backend used for manual and integration testing
+tools/benchmark.py         local throughput and latency benchmark
+examples/backend.py        backend used for local and integration testing
 ```
 
 ## Next steps
 
-A few things I want to add next:
-
-* TLS termination through OpenSSL
-* connection reuse
-* more precise URI normalization
-* multiple backend targets and load balancing
+The main areas I still want to explore are connection reuse, stricter URI normalization, and support for multiple backend targets.
