@@ -4,7 +4,7 @@ CPPFLAGS ?= -D_POSIX_C_SOURCE=200809L -Iinclude
 FUZZ_CC ?= clang
 BUILD := build
 
-.PHONY: all clean test sanitize fuzz fuzz-build
+.PHONY: all clean test integration sanitize fuzz fuzz-build
 
 all: $(BUILD)/cinderproxy
 
@@ -19,6 +19,9 @@ $(BUILD)/test_http: tests/test_http.c src/http.c include/http.h | $(BUILD)
 
 test: $(BUILD)/test_http
 	./$(BUILD)/test_http
+
+integration: $(BUILD)/cinderproxy
+	python3 tests/test_integration.py
 
 sanitize: | $(BUILD)
 	$(CC) $(CPPFLAGS) -std=c11 -Wall -Wextra -Wpedantic -O1 -g -fsanitize=address,undefined tests/test_http.c src/http.c -o $(BUILD)/test_http_san
