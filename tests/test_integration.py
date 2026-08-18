@@ -1,10 +1,11 @@
 import http.client
 import os
-import signal
 import subprocess
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROXY_PORT = 18080
+BACKEND_PORT = 19000
 
 
 def wait_for_port(port, timeout=5):
@@ -22,7 +23,7 @@ def wait_for_port(port, timeout=5):
 
 
 def request(method, path, body=None):
-    conn = http.client.HTTPConnection("127.0.0.1", 8080, timeout=3)
+    conn = http.client.HTTPConnection("127.0.0.1", PROXY_PORT, timeout=3)
     conn.request(method, path, body=body)
     response = conn.getresponse()
     data = response.read().decode()
@@ -32,20 +33,28 @@ def request(method, path, body=None):
 
 
 def main():
-    backend = subprocess.Popen(["python3", "examples/backend.py"], cwd=ROOT)
+    backend = subprocess.Popen([
+        "python3",
+        "examples/backend.py",
+        str(BACKEND_PORT),
+    ], cwd=ROOT)
     proxy = None
     try:
         time.sleep(0.2)
         proxy = subprocess.Popen([
             "./build/cinderproxy",
-            "--listen", "8080",
+            "--listen", str(PROXY_PORT),
             "--backend-host", "127.0.0.1",
-            "--backend-port", "9000",
+            "--backend-port", str(BACKEND_PORT),
             "--health-interval", "1",
             "--timeout", "2",
         ], cwd=ROOT)
 
-        wait_for_port(8080)
+        time.sleep(0.2)
+        if proxy.poll() is not None:
+            raise RuntimeError("CinderProxy exited before the integration test started")
+
+        wait_for_port(PROXY_PORT)
 
         status, data = request("GET", "/hello")
         assert status == 200, (status, data)
