@@ -44,7 +44,7 @@ Then send something through it:
 curl -v http://127.0.0.1:8080/hello
 ```
 
-The normal build has no OpenSSL dependency.
+The normal build has no OpenSSL dependency. Run `make clean` to remove generated build artifacts before rebuilding from scratch.
 
 ## TLS
 
