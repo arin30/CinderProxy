@@ -1,5 +1,6 @@
 #include "http.h"
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,7 +91,7 @@ http_parse_result_t http_parse_request(const char *buf,size_t len,size_t max_hea
     if(copy_span(h->name,sizeof(h->name),p,colon)||copy_span(h->value,sizeof(h->value),v,eol)||has_ctl(h->value)) return HTTP_PARSE_BAD_REQUEST;
     if(!strcasecmp(h->name,"Host")){ if(++host_count>1) return HTTP_PARSE_BAD_REQUEST; }
     else if(!strcasecmp(h->name,"Content-Length")){
-      char *ep=NULL; long x=strtol(h->value,&ep,10); if(!h->value[0]||!ep||*ep||x<0) return HTTP_PARSE_BAD_REQUEST;
+      char *ep=NULL; errno=0; long x=strtol(h->value,&ep,10); if(errno==ERANGE||!h->value[0]||!ep||*ep||x<0) return HTTP_PARSE_BAD_REQUEST;
       if(cl_seen&&x!=out->content_length) return HTTP_PARSE_BAD_REQUEST;
       out->content_length=x;
       cl_seen=1;
