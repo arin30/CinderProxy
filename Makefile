@@ -2,6 +2,7 @@ CC ?= cc
 CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -O2 -pthread
 CPPFLAGS ?= -D_POSIX_C_SOURCE=200809L -Iinclude
 FUZZ_CC ?= clang
+FUZZ_TIME ?= 20
 OPENSSL_PREFIX ?= $(shell brew --prefix openssl@3 2>/dev/null)
 TLS_CPPFLAGS ?= $(if $(OPENSSL_PREFIX),-I$(OPENSSL_PREFIX)/include,)
 TLS_LDFLAGS ?= $(if $(OPENSSL_PREFIX),-L$(OPENSSL_PREFIX)/lib,) -lssl -lcrypto
@@ -45,7 +46,7 @@ fuzz-build: | $(BUILD)
 	$(FUZZ_CC) $(CPPFLAGS) -std=c11 -O1 -g -fsanitize=fuzzer,address,undefined tests/fuzz_http.c src/http.c -o $(BUILD)/fuzz_http
 
 fuzz: fuzz-build
-	./$(BUILD)/fuzz_http -max_total_time=20
+	./$(BUILD)/fuzz_http -max_total_time=$(FUZZ_TIME)
 
 clean:
 	rm -rf $(BUILD)
