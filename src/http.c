@@ -72,7 +72,7 @@ http_parse_result_t http_parse_request(const char *buf,size_t len,size_t max_hea
   if(len>max_header_bytes) return HTTP_PARSE_TOO_LARGE;
   memset(out,0,sizeof(*out)); out->content_length=0;
   const char *end=buf+len,*line=find_crlf(buf,end); if(!line) return HTTP_PARSE_BAD_REQUEST;
-  const char *sp1=memchr(buf,' ',(size_t)(line-buf)); if(!sp1) return HTTP_PARSE_BAD_REQUEST;
+  const char *sp1=memchr(buf,' ',(size_t)(line-buf)); if(!sp1||sp1==buf) return HTTP_PARSE_BAD_REQUEST;
   const char *sp2=memchr(sp1+1,' ',(size_t)(line-(sp1+1))); if(!sp2) return HTTP_PARSE_BAD_REQUEST;
   if(memchr(sp2+1,' ',(size_t)(line-(sp2+1)))) return HTTP_PARSE_BAD_REQUEST;
   if(copy_span(out->method,sizeof(out->method),buf,sp1)||copy_span(out->target,sizeof(out->target),sp1+1,sp2)||copy_span(out->version,sizeof(out->version),sp2+1,line)) return HTTP_PARSE_TOO_LARGE;
