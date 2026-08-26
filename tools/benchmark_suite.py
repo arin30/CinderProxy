@@ -17,6 +17,9 @@ def parse_metric(output, name):
 
 
 def main():
+    if RUNS < 1:
+        raise ValueError("BENCH_RUNS must be at least 1")
+
     throughputs = []
     p95s = []
     failures = []
