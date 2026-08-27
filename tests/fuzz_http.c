@@ -1,5 +1,6 @@
 #include "http.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -22,6 +23,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         &req,
         &header_end
     );
+
+    assert(header_end <= size);
 
     if (result == HTTP_PARSE_OK) {
         char forward[32 * 1024];
