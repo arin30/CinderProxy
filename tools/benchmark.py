@@ -52,6 +52,11 @@ def percentile(values, p):
 
 
 def main():
+    if REQUESTS < 1:
+        raise ValueError("BENCH_REQUESTS must be at least 1")
+    if CONCURRENCY < 1:
+        raise ValueError("BENCH_CONCURRENCY must be at least 1")
+
     backend = subprocess.Popen([
         "python3", "-c",
         "from http.server import BaseHTTPRequestHandler,HTTPServer; "
