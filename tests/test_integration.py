@@ -1,5 +1,6 @@
 import http.client
 import os
+import socket
 import subprocess
 import time
 
@@ -12,11 +13,8 @@ def wait_for_port(port, timeout=5):
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=0.2)
-            conn.request("GET", "/health-probe")
-            conn.getresponse().read()
-            conn.close()
-            return
+            with socket.create_connection(("127.0.0.1", port), timeout=0.2):
+                return
         except OSError:
             time.sleep(0.1)
     raise RuntimeError(f"port {port} did not become ready")
@@ -40,7 +38,7 @@ def main():
     ], cwd=ROOT)
     proxy = None
     try:
-        time.sleep(0.2)
+        wait_for_port(BACKEND_PORT)
         proxy = subprocess.Popen([
             "./build/cinderproxy",
             "--listen", str(PROXY_PORT),
@@ -50,11 +48,9 @@ def main():
             "--timeout", "2",
         ], cwd=ROOT)
 
-        time.sleep(0.2)
+        wait_for_port(PROXY_PORT)
         if proxy.poll() is not None:
             raise RuntimeError("CinderProxy exited before the integration test started")
-
-        wait_for_port(PROXY_PORT)
 
         status, data = request("GET", "/hello")
         assert status == 200, (status, data)
