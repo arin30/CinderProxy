@@ -7,7 +7,7 @@
 #include <strings.h>
 
 static int token_char(unsigned char c){
-  if(isalnum(c)) return 1;
+  if((c>='0'&&c<='9')||(c>='A'&&c<='Z')||(c>='a'&&c<='z')) return 1;
   const char *ok="!#$%&'*+-.^_`|~";
   return strchr(ok,(int)c)!=NULL;
 }
