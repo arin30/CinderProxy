@@ -26,5 +26,17 @@ int main(void){
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nContent-Length: 7\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nContent-Length: 5\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n")==HTTP_PARSE_UNSUPPORTED);
+
+  http_request_t req; size_t header_end=0, out_len=0; char forwarded[4096];
+  const char *raw="GET /ok HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nX-Forwarded-For: spoofed\r\nX-Test: yes\r\n\r\n";
+  assert(http_parse_request(raw,strlen(raw),16384,&req,&header_end)==HTTP_PARSE_OK);
+  assert(http_build_forward_request(&req,"198.51.100.7",forwarded,sizeof(forwarded),&out_len)==0);
+  assert(strstr(forwarded,"Connection: keep-alive")==NULL);
+  assert(strstr(forwarded,"X-Forwarded-For: spoofed")==NULL);
+  assert(strstr(forwarded,"X-Test: yes\r\n")!=NULL);
+  assert(strstr(forwarded,"X-Forwarded-For: 198.51.100.7\r\n")!=NULL);
+  assert(strstr(forwarded,"Connection: close\r\n")!=NULL);
+  assert(out_len==strlen(forwarded));
+
   puts("test_http: ok"); return 0;
 }
