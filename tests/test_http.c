@@ -10,6 +10,12 @@ int main(void){
   assert(parse("GET / HTTP/1.1\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("GET / HTTP/1.0\r\n\r\n")==HTTP_PARSE_OK);
 
+  {
+    const char *raw="GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
+    http_request_t req; size_t header_end=0;
+    assert(http_parse_request(raw,strlen(raw),strlen(raw)-1,&req,&header_end)==HTTP_PARSE_TOO_LARGE);
+  }
+
   assert(parse("GET /a/../b HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /a/./b HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /a/%2e%2e/b HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
