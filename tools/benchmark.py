@@ -65,7 +65,7 @@ def main():
     ], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     proxy = None
     try:
-        time.sleep(0.2)
+        wait_ready(BACKEND_PORT)
         proxy = subprocess.Popen([
             "./build/cinderproxy", "--listen", str(PROXY_PORT),
             "--backend-host", "127.0.0.1", "--backend-port", str(BACKEND_PORT),
