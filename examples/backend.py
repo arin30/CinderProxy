@@ -1,4 +1,4 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import sys
 
 
@@ -32,4 +32,4 @@ class Handler(BaseHTTPRequestHandler):
 
 
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 9000
-HTTPServer(("127.0.0.1", port), Handler).serve_forever()
+ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
