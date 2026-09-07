@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import math
 import os
 import statistics
 import subprocess
@@ -12,7 +13,10 @@ def parse_metric(output, name):
     prefix = f"{name}:"
     for line in output.splitlines():
         if line.startswith(prefix):
-            return float(line.split(":", 1)[1].strip())
+            value = float(line.split(":", 1)[1].strip())
+            if not math.isfinite(value):
+                raise ValueError(f"non-finite metric: {name}")
+            return value
     raise ValueError(f"missing metric: {name}")
 
 
