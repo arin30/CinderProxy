@@ -20,6 +20,17 @@ def wait_for_port(port, timeout=5):
     raise RuntimeError(f"port {port} did not become ready")
 
 
+def stop_process(process, timeout=3):
+    if process is None or process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=timeout)
+
+
 def request(method, path, body=None):
     conn = http.client.HTTPConnection("127.0.0.1", PROXY_PORT, timeout=3)
     conn.request(method, path, body=body)
@@ -60,8 +71,7 @@ def main():
         assert status == 200, (status, data)
         assert "262144 bytes" in data, data
 
-        backend.terminate()
-        backend.wait(timeout=3)
+        stop_process(backend)
         time.sleep(1.5)
 
         status, _ = request("GET", "/after-backend-stop")
@@ -69,12 +79,8 @@ def main():
 
         print("test_integration: ok")
     finally:
-        if proxy is not None and proxy.poll() is None:
-            proxy.terminate()
-            proxy.wait(timeout=3)
-        if backend.poll() is None:
-            backend.terminate()
-            backend.wait(timeout=3)
+        stop_process(proxy)
+        stop_process(backend)
 
 
 if __name__ == "__main__":
