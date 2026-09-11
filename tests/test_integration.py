@@ -41,6 +41,18 @@ def request(method, path, body=None):
     return status, data
 
 
+def oversized_header_status():
+    request_bytes = (
+        b"GET /oversized HTTP/1.1\r\n"
+        b"Host: localhost\r\n"
+        b"X-Fill: " + b"a" * (16 * 1024) + b"\r\n\r\n"
+    )
+    with socket.create_connection(("127.0.0.1", PROXY_PORT), timeout=3) as sock:
+        sock.sendall(request_bytes)
+        response = sock.recv(1024)
+    return response.split(b" ", 2)[1]
+
+
 def main():
     backend = subprocess.Popen([
         "python3",
@@ -70,6 +82,8 @@ def main():
         status, data = request("POST", "/upload", payload)
         assert status == 200, (status, data)
         assert "262144 bytes" in data, data
+
+        assert oversized_header_status() == b"431"
 
         stop_process(backend)
         time.sleep(1.5)
