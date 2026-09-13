@@ -29,6 +29,17 @@ def wait_ready(port, timeout=5):
     raise RuntimeError(f"port {port} did not become ready")
 
 
+def stop_process(proc):
+    if proc is None or proc.poll() is not None:
+        return
+    proc.terminate()
+    try:
+        proc.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=3)
+
+
 def one_request(_):
     start = time.perf_counter()
     try:
@@ -97,12 +108,8 @@ def main():
             print(f"latency_p95_ms: {percentile(latencies, 0.95):.3f}")
             print(f"latency_p99_ms: {percentile(latencies, 0.99):.3f}")
     finally:
-        if proxy is not None and proxy.poll() is None:
-            proxy.terminate()
-            proxy.wait(timeout=3)
-        if backend.poll() is None:
-            backend.terminate()
-            backend.wait(timeout=3)
+        stop_process(proxy)
+        stop_process(backend)
 
 
 if __name__ == "__main__":
