@@ -39,7 +39,10 @@ def main():
         )
         rps = parse_metric(proc.stdout, "requests_sec")
         p95 = parse_metric(proc.stdout, "latency_p95_ms")
-        failed = int(parse_metric(proc.stdout, "failed"))
+        failed_metric = parse_metric(proc.stdout, "failed")
+        if not failed_metric.is_integer():
+            raise ValueError("failed metric must be an integer")
+        failed = int(failed_metric)
         throughputs.append(rps)
         p95s.append(p95)
         failures.append(failed)
