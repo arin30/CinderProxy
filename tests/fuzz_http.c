@@ -37,6 +37,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             &forward_len
         );
         if (build_result == 0) {
+            assert(forward_len > 0);
             assert(forward_len < sizeof(forward));
         }
     }
