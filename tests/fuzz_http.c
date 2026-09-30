@@ -27,6 +27,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     assert(header_end <= size);
 
     if (result == HTTP_PARSE_OK) {
+        assert(header_end > 0);
+
         char forward[32 * 1024];
         size_t forward_len = 0;
         int build_result = http_build_forward_request(
