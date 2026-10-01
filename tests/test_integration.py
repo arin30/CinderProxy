@@ -77,6 +77,7 @@ def main():
 
         status, data = request("GET", "/hello")
         assert status == 200, (status, data)
+        assert "/hello" in data, data
 
         payload = b"x" * (256 * 1024)
         status, data = request("POST", "/upload", payload)
