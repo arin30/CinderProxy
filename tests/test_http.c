@@ -26,6 +26,7 @@ int main(void){
   assert(parse("GET /a%00b HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /bad%zz HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /bad% HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /safe#fragment HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
 
   assert(parse("GET / HTTP/1.1\r\nHost: one\r\nHost: two\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("GET / HTTP/1.1\r\nHost : localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
