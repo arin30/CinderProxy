@@ -49,7 +49,7 @@ def one_request(_):
         r.read()
         status = r.status
         c.close()
-    except OSError:
+    except (OSError, http.client.HTTPException):
         return 0, 0.0
     return status, (time.perf_counter() - start) * 1000.0
 
