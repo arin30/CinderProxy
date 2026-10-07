@@ -37,6 +37,7 @@ int main(void){
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nContent-Length: 7\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nContent-Length: 5\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n")==HTTP_PARSE_UNSUPPORTED);
+  assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: identity\r\n\r\n")==HTTP_PARSE_OK);
 
   http_request_t req; size_t header_end=0, out_len=0; char forwarded[4096];
   const char *raw="GET /ok HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nX-Forwarded-For: spoofed\r\nX-Test: yes\r\n\r\n";
