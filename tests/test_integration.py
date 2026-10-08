@@ -79,6 +79,10 @@ def main():
         assert status == 200, (status, data)
         assert "/hello" in data, data
 
+        status, data = request("GET", "/search?q=../safe")
+        assert status == 200, (status, data)
+        assert "/search?q=../safe" in data, data
+
         payload = b"x" * (256 * 1024)
         status, data = request("POST", "/upload", payload)
         assert status == 200, (status, data)
