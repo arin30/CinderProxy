@@ -8,6 +8,8 @@ int main(void){
   assert(parse("GET /ok HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET /search?q=../safe HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/1.1\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+  assert(parse("GET / HTTP/1.1\r\nhost: localhost\r\n\r\n")==HTTP_PARSE_OK);
+  assert(parse("GET / HTTP/1.1\r\nHost: one\r\nhOST: two\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("GET / HTTP/1.0\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/2.0\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_UNSUPPORTED);
 
