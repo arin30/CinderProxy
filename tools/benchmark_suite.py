@@ -39,6 +39,8 @@ def main():
         )
         rps = parse_metric(proc.stdout, "requests_sec")
         p95 = parse_metric(proc.stdout, "latency_p95_ms")
+        if rps < 0 or p95 < 0:
+            raise ValueError("throughput and latency metrics must be non-negative")
         failed_metric = parse_metric(proc.stdout, "failed")
         if not failed_metric.is_integer() or failed_metric < 0:
             raise ValueError("failed metric must be a non-negative integer")
