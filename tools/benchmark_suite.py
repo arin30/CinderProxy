@@ -20,6 +20,15 @@ def parse_metric(output, name):
     raise ValueError(f"missing metric: {name}")
 
 
+def test_parse_metric_rejects_non_finite_values():
+    for value in ("nan", "inf", "-inf"):
+        try:
+            parse_metric(f"requests_sec: {value}", "requests_sec")
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted non-finite metric: {value}")
+
+
 def main():
     if RUNS < 1:
         raise ValueError("BENCH_RUNS must be at least 1")
