@@ -29,6 +29,15 @@ def test_parse_metric_rejects_non_finite_values():
         raise AssertionError(f"accepted non-finite metric: {value}")
 
 
+def test_parse_metric_rejects_missing_metric():
+    try:
+        parse_metric("latency_p95_ms: 1.5", "requests_sec")
+    except ValueError as exc:
+        assert "missing metric" in str(exc)
+    else:
+        raise AssertionError("missing benchmark metric was accepted")
+
+
 def main():
     if RUNS < 1:
         raise ValueError("BENCH_RUNS must be at least 1")
