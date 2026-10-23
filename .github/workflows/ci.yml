@@ -25,6 +25,15 @@ jobs:
       - name: Run proxy integration test
         run: make integration
 
+
+      - name: Validate benchmark metric parsing
+        run: |
+          python3 - <<'PY'
+          from tools.benchmark_suite import test_parse_metric_rejects_non_finite_values, test_parse_metric_rejects_missing_metric
+          test_parse_metric_rejects_non_finite_values()
+          test_parse_metric_rejects_missing_metric()
+          PY
+
       - name: Run sanitizer tests
         run: make sanitize
 
