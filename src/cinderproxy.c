@@ -23,6 +23,13 @@
 #define QUEUE_CAPACITY 256
 #define BODY_CHUNK 16384
 
+static int headers_complete(const char *buf, size_t len) {
+    for (size_t i = 0; i + 3 < len; i++) {
+        if (memcmp(buf + i, "\r\n\r\n", 4) == 0) return 1;
+    }
+    return 0;
+}
+
 typedef struct { char ip[64]; time_t start; int count; int used; } rate_entry_t;
 typedef struct { rate_entry_t e[RATE_SLOTS]; pthread_mutex_t lock; int limit; int window; } limiter_t;
 typedef struct backend_health backend_health_t;
@@ -284,9 +291,9 @@ static void handle_client(client_t *c) {
         if (n <= 0) { free(buf); goto done; }
         used += (size_t)n;
         buf[used] = '\0';
-        if (strstr(buf, "\r\n\r\n")) break;
+        if (headers_complete(buf, used)) break;
     }
-    if (!strstr(buf, "\r\n\r\n")) {
+    if (!headers_complete(buf, used)) {
         error_resp(fd, tls, 431, "Request Header Fields Too Large");
         free(buf);
         goto done;
