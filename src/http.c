@@ -88,7 +88,7 @@ http_parse_result_t http_parse_request(const char *buf,size_t len,size_t max_hea
     const char *v=colon+1; while(v<eol&&(*v==' '||*v=='\t')) v++;
     http_header_t *h=&out->headers[out->header_count++];
     if(copy_span(h->name,sizeof(h->name),p,colon)||copy_span(h->value,sizeof(h->value),v,eol)||has_ctl(h->value)) return HTTP_PARSE_BAD_REQUEST;
-    if(!strcasecmp(h->name,"Host")){ if(++host_count>1) return HTTP_PARSE_BAD_REQUEST; }
+    if(!strcasecmp(h->name,"Host")){ if(!h->value[0]||++host_count>1) return HTTP_PARSE_BAD_REQUEST; }
     else if(!strcasecmp(h->name,"Content-Length")){
       for(const unsigned char *q=(unsigned char*)h->value;*q;q++) if(*q<'0'||*q>'9') return HTTP_PARSE_BAD_REQUEST;
       char *ep=NULL; errno=0; long x=strtol(h->value,&ep,10); if(errno==ERANGE||!h->value[0]||!ep||*ep||x<0) return HTTP_PARSE_BAD_REQUEST;
