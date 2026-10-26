@@ -71,6 +71,7 @@ http_parse_result_t http_parse_request(const char *buf,size_t len,size_t max_hea
   if(len>max_header_bytes) return HTTP_PARSE_TOO_LARGE;
   memset(out,0,sizeof(*out)); out->content_length=0;
   const char *end=buf+len,*line=find_crlf(buf,end); if(!line) return HTTP_PARSE_BAD_REQUEST;
+  if(memchr(buf,'\0',(size_t)(line-buf))) return HTTP_PARSE_BAD_REQUEST;
   const char *sp1=memchr(buf,' ',(size_t)(line-buf)); if(!sp1||sp1==buf) return HTTP_PARSE_BAD_REQUEST;
   const char *sp2=memchr(sp1+1,' ',(size_t)(line-(sp1+1))); if(!sp2) return HTTP_PARSE_BAD_REQUEST;
   if(memchr(sp2+1,' ',(size_t)(line-(sp2+1)))) return HTTP_PARSE_BAD_REQUEST;
@@ -81,6 +82,7 @@ http_parse_result_t http_parse_request(const char *buf,size_t len,size_t max_hea
   int host_count=0,cl_seen=0; const char *p=line+2;
   while(p<end){
     const char *eol=find_crlf(p,end); if(!eol) return HTTP_PARSE_BAD_REQUEST;
+    if(memchr(p,'\0',(size_t)(eol-p))) return HTTP_PARSE_BAD_REQUEST;
     if(eol==p){ *header_end=(size_t)((eol+2)-buf); if(!strcmp(out->version,"HTTP/1.1")&&host_count!=1) return HTTP_PARSE_BAD_REQUEST; return HTTP_PARSE_OK; }
     if(out->header_count>=HTTP_MAX_HEADERS) return HTTP_PARSE_TOO_LARGE;
     const char *colon=memchr(p,':',(size_t)(eol-p)); if(!colon||colon==p) return HTTP_PARSE_BAD_REQUEST;
