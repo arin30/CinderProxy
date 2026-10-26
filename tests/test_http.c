@@ -5,6 +5,27 @@
 
 static http_parse_result_t parse(const char *s){ http_request_t r; size_t e=0; return http_parse_request(s,strlen(s),16384,&r,&e); }
 int main(void){
+  {
+    const char *requests[]={
+      "GET\0X / HTTP/1.1\r\nHost: localhost\r\n\r\n",
+      "GET /ok\0hidden HTTP/1.1\r\nHost: localhost\r\n\r\n",
+      "GET / HTTP/1.1\0hidden\r\nHost: localhost\r\n\r\n",
+      "GET / HTTP/1.1\r\nHost\0hidden: localhost\r\n\r\n",
+      "GET / HTTP/1.1\r\nHost: localhost\0hidden\r\n\r\n"
+    };
+    const size_t lengths[]={
+      sizeof("GET\0X / HTTP/1.1\r\nHost: localhost\r\n\r\n")-1,
+      sizeof("GET /ok\0hidden HTTP/1.1\r\nHost: localhost\r\n\r\n")-1,
+      sizeof("GET / HTTP/1.1\0hidden\r\nHost: localhost\r\n\r\n")-1,
+      sizeof("GET / HTTP/1.1\r\nHost\0hidden: localhost\r\n\r\n")-1,
+      sizeof("GET / HTTP/1.1\r\nHost: localhost\0hidden\r\n\r\n")-1
+    };
+    http_request_t r; size_t e=0;
+    for(size_t i=0;i<sizeof(requests)/sizeof(requests[0]);i++)
+      assert(http_parse_request(requests[i],lengths[i],16384,&r,&e)==HTTP_PARSE_BAD_REQUEST);
+    const char body[]="POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 3\r\n\r\na\0b";
+    assert(http_parse_request(body,sizeof(body)-1,16384,&r,&e)==HTTP_PARSE_OK);
+  }
   assert(parse("GET /ok HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET /search?q=../safe HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/1.1\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
