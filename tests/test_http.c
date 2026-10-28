@@ -82,11 +82,11 @@ int main(void){
   assert(out_len==strlen(forwarded));
 
   {
-    const char *mixed="GET / HTTP/1.1\\r\\nHost: localhost\\r\\nx-fOrWaRdEd-FoR: 203.0.113.99\\r\\n\\r\\n";
+    const char *mixed="GET / HTTP/1.1\r\nHost: localhost\r\nx-fOrWaRdEd-FoR: 203.0.113.99\r\n\r\n";
     assert(http_parse_request(mixed,strlen(mixed),16384,&req,&header_end)==HTTP_PARSE_OK);
     assert(http_build_forward_request(&req,"198.51.100.8",forwarded,sizeof(forwarded),&out_len)==0);
     assert(strstr(forwarded,"203.0.113.99")==NULL);
-    assert(strstr(forwarded,"X-Forwarded-For: 198.51.100.8\\r\\n")!=NULL);
+    assert(strstr(forwarded,"X-Forwarded-For: 198.51.100.8\r\n")!=NULL);
     assert(http_build_forward_request(&req,"198.51.100.8",forwarded,16,&out_len)==-1);
   }
 
