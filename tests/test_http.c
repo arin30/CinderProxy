@@ -90,5 +90,21 @@ int main(void){
     assert(http_build_forward_request(&req,"198.51.100.8",forwarded,16,&out_len)==-1);
   }
 
+  {
+    const char *hop_headers =
+      "GET / HTTP/1.1\r\nHost: localhost\r\n"
+      "kEeP-aLiVe: timeout=5\r\nTe: trailers\r\n"
+      "tRaIlEr: X-Foo\r\nuPgRaDe: websocket\r\n"
+      "X-End-To-End: preserved\r\n\r\n";
+    assert(http_parse_request(hop_headers,strlen(hop_headers),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(http_build_forward_request(&req,"198.51.100.9",forwarded,sizeof(forwarded),&out_len)==0);
+    assert(strstr(forwarded,"kEeP-aLiVe:")==NULL);
+    assert(strstr(forwarded,"Te: trailers")==NULL);
+    assert(strstr(forwarded,"tRaIlEr:")==NULL);
+    assert(strstr(forwarded,"uPgRaDe:")==NULL);
+    assert(strstr(forwarded,"X-End-To-End: preserved\r\n")!=NULL);
+    assert(strstr(forwarded,"X-Forwarded-For: 198.51.100.9\r\n")!=NULL);
+  }
+
   puts("test_http: ok"); return 0;
 }
