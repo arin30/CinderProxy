@@ -59,8 +59,8 @@ int main(void){
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length:\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: +5\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: -1\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
-  assert(parse("POST / HTTP/1.1\\r\\nHost: localhost\\r\\nContent-Length: 999999999999999999999999999999\\r\\n\\r\\n")==HTTP_PARSE_BAD_REQUEST);
-  assert(parse("POST / HTTP/1.1\\r\\nHost: localhost\\r\\nTransfer-Encoding: gzip\\r\\n\\r\\n")==HTTP_PARSE_UNSUPPORTED);
+  assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 999999999999999999999999999999\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+  assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: gzip\r\n\r\n")==HTTP_PARSE_UNSUPPORTED);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nContent-Length: 7\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nContent-Length: 5\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\ncOnTeNt-LeNgTh: 6\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
