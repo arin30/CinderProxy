@@ -108,5 +108,14 @@ int main(void){
     assert(strstr(forwarded,"X-Forwarded-For: 198.51.100.9\r\n")!=NULL);
   }
 
+  {
+    /* Header names must be HTTP tokens; control bytes in values are invalid. */
+    assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX Bad: value\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Bad\t: value\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Test: yes\x01\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Test: yes\x7f\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace_Id: allowed\r\n\r\n")==HTTP_PARSE_OK);
+  }
+
   puts("test_http: ok"); return 0;
 }
