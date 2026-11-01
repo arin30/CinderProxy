@@ -117,5 +117,15 @@ int main(void){
     assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace_Id: allowed\r\n\r\n")==HTTP_PARSE_OK);
   }
 
+
+  {
+    /* Encoded controls and separators must never reach the upstream. */
+    assert(parse("GET /safe/%0D%0Ainjected HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+    assert(parse("GET /safe/%7F HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+    assert(parse("GET /safe/%2Fsecret HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+    assert(parse("GET /safe/%5Csecret HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+    assert(parse("GET /safe/%41 HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
+  }
+
   puts("test_http: ok"); return 0;
 }
