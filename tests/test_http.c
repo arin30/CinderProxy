@@ -28,10 +28,10 @@ int main(void){
   }
   {
     /* Reject invalid HTTP method tokens without blocking valid extension methods. */
-    assert(parse("G@T / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_BAD_REQUEST);
-    assert(parse("GE/T / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_BAD_REQUEST);
-    assert(parse("G\\tET / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_BAD_REQUEST);
-    assert(parse("M-SEARCH / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_OK);
+    assert(parse("G@T / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("GE/T / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("G\tET / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("M-SEARCH / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   }
 
   assert(parse("GET /ok HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
