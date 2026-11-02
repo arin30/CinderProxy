@@ -26,6 +26,14 @@ int main(void){
     const char body[]="POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 3\r\n\r\na\0b";
     assert(http_parse_request(body,sizeof(body)-1,16384,&r,&e)==HTTP_PARSE_OK);
   }
+  {
+    /* Reject invalid HTTP method tokens without blocking valid extension methods. */
+    assert(parse("G@T / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("GE/T / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("G\\tET / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_BAD_REQUEST);
+    assert(parse("M-SEARCH / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_OK);
+  }
+
   assert(parse("GET /ok HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET /search?q=../safe HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/1.1\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
