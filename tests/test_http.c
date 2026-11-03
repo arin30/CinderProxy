@@ -34,6 +34,11 @@ int main(void){
     assert(parse("M-SEARCH / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   }
 
+
+  /* HTTP/1.0 permits an absent Host, unlike HTTP/1.1. */
+  assert(parse("POST /submit HTTP/1.0\r\nContent-Length: 0\r\n\r\n")==HTTP_PARSE_OK);
+  assert(parse("POST /submit HTTP/1.1\r\nContent-Length: 0\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+
   assert(parse("GET /ok HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET /search?q=../safe HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/1.1\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
