@@ -141,8 +141,8 @@ int main(void){
   }
 
   /* Reject encoded horizontal tabs in paths, but permit encoded unreserved bytes. */
-  assert(parse("GET /safe/%09injected HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_TRAVERSAL);
-  assert(parse("GET /safe/%7Euser HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n")==HTTP_PARSE_OK);
+  assert(parse("GET /safe/%09injected HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /safe/%7Euser HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
 
   puts("test_http: ok"); return 0;
 }
