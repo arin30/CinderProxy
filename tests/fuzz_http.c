@@ -38,6 +38,12 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             sizeof(forward),
             &forward_len
         );
+        /* Even valid parsed requests must reject insufficient output capacity. */
+        char tiny[1];
+        size_t tiny_len = 0;
+        assert(http_build_forward_request(
+            &req, "127.0.0.1", tiny, sizeof(tiny), &tiny_len
+        ) == -1);
         if (build_result == 0) {
             assert(forward_len > 0);
             assert(forward_len < sizeof(forward));
