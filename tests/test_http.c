@@ -146,5 +146,9 @@ int main(void){
   assert(parse("GET /safe/%09injected HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /safe/%7Euser HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
 
+  /* Incomplete header lines must not be accepted as valid requests. */
+  assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: pending\r\n")==HTTP_PARSE_BAD_REQUEST);
+  assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: pending\r\n\r\n")==HTTP_PARSE_OK);
+
   puts("test_http: ok"); return 0;
 }
