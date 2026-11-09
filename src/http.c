@@ -91,8 +91,10 @@ http_parse_result_t http_parse_request(const char *buf,size_t len,size_t max_hea
     const char *colon=memchr(p,':',(size_t)(eol-p)); if(!colon||colon==p) return HTTP_PARSE_BAD_REQUEST;
     for(const char *q=p;q<colon;q++) if(!token_char((unsigned char)*q)) return HTTP_PARSE_BAD_REQUEST;
     const char *v=colon+1; while(v<eol&&(*v==' '||*v=='\t')) v++;
+    const char *value_end=eol;
+    while(value_end>v&&(value_end[-1]==' '||value_end[-1]=='\t')) value_end--;
     http_header_t *h=&out->headers[out->header_count++];
-    if(copy_span(h->name,sizeof(h->name),p,colon)||copy_span(h->value,sizeof(h->value),v,eol)||has_ctl(h->value)) return HTTP_PARSE_BAD_REQUEST;
+    if(copy_span(h->name,sizeof(h->name),p,colon)||copy_span(h->value,sizeof(h->value),v,value_end)||has_ctl(h->value)) return HTTP_PARSE_BAD_REQUEST;
     if(!strcasecmp(h->name,"Host")){ if(!h->value[0]||++host_count>1) return HTTP_PARSE_BAD_REQUEST; }
     else if(!strcasecmp(h->name,"Content-Length")){
       for(const unsigned char *q=(unsigned char*)h->value;*q;q++) if(*q<'0'||*q>'9') return HTTP_PARSE_BAD_REQUEST;

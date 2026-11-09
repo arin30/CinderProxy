@@ -160,5 +160,10 @@ int main(void){
   assert(parse("GET /safe/%2e/secret HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /safe/file%2etxt HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
 
+  /* Optional whitespace around field values does not change their meaning. */
+  assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5 \t\r\n\r\n")==HTTP_PARSE_OK);
+  assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\t\r\nContent-Length: 5 \r\n\r\n")==HTTP_PARSE_OK);
+  assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5 6\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+
   puts("test_http: ok"); return 0;
 }
