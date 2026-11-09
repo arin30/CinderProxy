@@ -41,6 +41,11 @@ int main(void){
 
   assert(parse("GET /ok HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET /search?q=../safe HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
+  /* Query text must not bypass request-target control/fragment validation. */
+  assert(parse("GET /search?q=bad\tvalue HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /search?q=bad\x7fvalue HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /search?q=safe#fragment HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /search?q=%23safe HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/1.1\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("GET / HTTP/1.1\r\nhost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/1.1\r\nHost: one\r\nhOST: two\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);

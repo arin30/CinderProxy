@@ -29,6 +29,9 @@ static int hex_value(unsigned char c){
 }
 static int safe_target(const char *t){
   if(!t[0]||t[0]!='/') return 0;
+  /* Controls and fragments are invalid in the query as well as the path. */
+  for(const unsigned char *p=(const unsigned char *)t;*p;p++)
+    if(*p<32||*p==127||*p=='#') return 0;
 
   char segment[1024];
   size_t seg_len=0;
