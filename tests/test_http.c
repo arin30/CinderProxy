@@ -150,5 +150,10 @@ int main(void){
   assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: pending\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: pending\r\n\r\n")==HTTP_PARSE_OK);
 
+  /* Percent-encoded dot segments are traversal; encoded dots in filenames are safe. */
+  assert(parse("GET /safe/%2e%2e/secret HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /safe/%2e/secret HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /safe/file%2etxt HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
+
   puts("test_http: ok"); return 0;
 }
