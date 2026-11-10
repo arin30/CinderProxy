@@ -165,5 +165,9 @@ int main(void){
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\t\r\nContent-Length: 5 \r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5 6\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
 
+  /* Host header matching is case-insensitive, including duplicate detection. */
+  assert(parse("GET / HTTP/1.1\r\nhOsT: localhost\r\n\r\n")==HTTP_PARSE_OK);
+  assert(parse("GET / HTTP/1.1\r\nHOST: localhost\r\nhost: other\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+
   puts("test_http: ok"); return 0;
 }
