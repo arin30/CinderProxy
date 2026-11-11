@@ -169,5 +169,10 @@ int main(void){
   assert(parse("GET / HTTP/1.1\r\nhOsT: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("GET / HTTP/1.1\r\nHOST: localhost\r\nhost: other\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
 
+  /* Terminal dot segments remain unsafe even when followed by a query. */
+  assert(parse("GET /safe/..?q=1 HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /safe/%2e?q=1 HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
+  assert(parse("GET /safe/file.txt?q=1 HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
+
   puts("test_http: ok"); return 0;
 }
