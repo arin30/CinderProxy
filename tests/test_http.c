@@ -174,5 +174,9 @@ int main(void){
   assert(parse("GET /safe/%2e?q=1 HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /safe/file.txt?q=1 HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
 
+  /* Valid token punctuation is allowed in extension methods; separators are not. */
+  assert(parse("X_CHECK / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
+  assert(parse("X:CHECK / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+
   puts("test_http: ok"); return 0;
 }
