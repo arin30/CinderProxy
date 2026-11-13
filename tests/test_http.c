@@ -178,5 +178,14 @@ int main(void){
   assert(parse("X_CHECK / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
   assert(parse("X:CHECK / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
 
+  /* A missing client IP must produce an explicit fallback, not a null value. */
+  {
+    const char *request = "GET /status HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n";
+    assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(http_build_forward_request(&req,NULL,forwarded,sizeof(forwarded),&out_len)==0);
+    assert(strstr(forwarded,"X-Forwarded-For: unknown\\r\\n")!=NULL);
+    assert(out_len==strlen(forwarded));
+  }
+
   puts("test_http: ok"); return 0;
 }
