@@ -187,5 +187,19 @@ int main(void){
     assert(out_len==strlen(forwarded));
   }
 
+  /* Forwarding requires room for the final NUL terminator. */
+  {
+    const char *request = "GET /capacity HTTP/1.1\r\nHost: localhost\r\n\r\n";
+    assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(http_build_forward_request(&req,"192.0.2.5",forwarded,sizeof(forwarded),&out_len)==0);
+    size_t required = out_len;
+    char exact[4096];
+    assert(required + 1 <= sizeof(exact));
+    assert(http_build_forward_request(&req,"192.0.2.5",exact,required,&out_len)==-1);
+    assert(http_build_forward_request(&req,"192.0.2.5",exact,required+1,&out_len)==0);
+    assert(out_len==required);
+    assert(strcmp(exact,forwarded)==0);
+  }
+
   puts("test_http: ok"); return 0;
 }
