@@ -201,5 +201,10 @@ int main(void){
     assert(strcmp(exact,forwarded)==0);
   }
 
+
+  /* HTTP/1.0 Host is optional, but duplicate Host fields remain ambiguous. */
+  assert(parse("GET / HTTP/1.0\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_OK);
+  assert(parse("GET / HTTP/1.0\r\nHost: one\r\nhost: two\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+
   puts("test_http: ok"); return 0;
 }
