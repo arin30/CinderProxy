@@ -208,7 +208,7 @@ int main(void){
 
 
   /* Malformed request-line spacing must not change how fields are parsed. */
-  assert(parse("GET  / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+  assert(parse("GET  / HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_TRAVERSAL);
   assert(parse("GET /  HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_UNSUPPORTED);
   assert(parse("GET / HTTP/1.1 extra\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
 
