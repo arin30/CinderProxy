@@ -212,5 +212,9 @@ int main(void){
   assert(parse("GET /  HTTP/1.1\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_UNSUPPORTED);
   assert(parse("GET / HTTP/1.1 extra\r\nHost: localhost\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
 
+  /* Bare LF within a header value must not be forwarded as header data. */
+  assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: safe\nInjected: yes\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
+  assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: safe\r\n\r\n")==HTTP_PARSE_OK);
+
   puts("test_http: ok"); return 0;
 }
