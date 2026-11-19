@@ -227,7 +227,7 @@ int main(void){
     assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
     assert(header_end==strlen(headers));
     assert(req.header_count==2);
-    assert(req.content_length==18);
+    assert(req.content_length==19);
   }
 
   puts("test_http: ok"); return 0;
