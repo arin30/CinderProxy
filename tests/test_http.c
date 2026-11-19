@@ -216,5 +216,19 @@ int main(void){
   assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: safe\nInjected: yes\r\n\r\n")==HTTP_PARSE_BAD_REQUEST);
   assert(parse("GET / HTTP/1.1\r\nHost: localhost\r\nX-Trace: safe\r\n\r\n")==HTTP_PARSE_OK);
 
+
+  /* A body containing CRLF and header-like text must not extend the header block. */
+  {
+    const char *headers = "POST /submit HTTP/1.1\r\nHost: localhost\r\nContent-Length: 18\r\n\r\n";
+    const char *body = "X-Fake: yes\r\n\r\nrest";
+    char request[256];
+    assert(strlen(headers) + strlen(body) < sizeof(request));
+    snprintf(request,sizeof(request),"%s%s",headers,body);
+    assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(header_end==strlen(headers));
+    assert(req.header_count==2);
+    assert(req.content_length==18);
+  }
+
   puts("test_http: ok"); return 0;
 }
