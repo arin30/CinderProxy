@@ -230,5 +230,15 @@ int main(void){
     assert(req.content_length==19);
   }
 
+
+  /* Equivalent zero-padded Content-Length fields must retain their numeric value. */
+  {
+    const char *request = "POST /upload HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0005\r\ncontent-length: 5\r\n\r\nhello";
+    assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(req.content_length==5);
+    assert(header_end==strlen(request)-5);
+    assert(req.header_count==3);
+  }
+
   puts("test_http: ok"); return 0;
 }
