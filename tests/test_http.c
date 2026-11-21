@@ -240,5 +240,17 @@ int main(void){
     assert(req.header_count==3);
   }
 
+
+  /* An identity transfer encoding is accepted but never forwarded hop-by-hop. */
+  {
+    const char *request = "POST /submit HTTP/1.1\r\nHost: localhost\r\ntRaNsFeR-EnCoDiNg: identity\r\nX-Trace: retained\r\n\r\n";
+    assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(http_build_forward_request(&req,"192.0.2.17",forwarded,sizeof(forwarded),&out_len)==0);
+    assert(strstr(forwarded,"tRaNsFeR-EnCoDiNg")==NULL);
+    assert(strstr(forwarded,"X-Trace: retained\r\n")!=NULL);
+    assert(strstr(forwarded,"X-Forwarded-For: 192.0.2.17\r\n")!=NULL);
+    assert(out_len==strlen(forwarded));
+  }
+
   puts("test_http: ok"); return 0;
 }
