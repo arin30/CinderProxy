@@ -219,7 +219,7 @@ int main(void){
 
   /* A body containing CRLF and header-like text must not extend the header block. */
   {
-    const char *headers = "POST /submit HTTP/1.1\r\nHost: localhost\r\nContent-Length: 18\r\n\r\n";
+    const char *headers = "POST /submit HTTP/1.1\r\nHost: localhost\r\nContent-Length: 19\r\n\r\n";
     const char *body = "X-Fake: yes\r\n\r\nrest";
     char request[256];
     assert(strlen(headers) + strlen(body) < sizeof(request));
@@ -227,7 +227,7 @@ int main(void){
     assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
     assert(header_end==strlen(headers));
     assert(req.header_count==2);
-    assert(req.content_length==19);
+    assert(req.content_length==strlen(body));
   }
 
 
