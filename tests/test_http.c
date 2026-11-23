@@ -252,5 +252,20 @@ int main(void){
     assert(out_len==strlen(forwarded));
   }
 
+
+  /* Forward only request headers; preserve body framing without copying body bytes. */
+  {
+    const char *request = "POST /ingest?source=test HTTP/1.1\r\nHost: localhost\r\nContent-Length: 4\r\nX-Trace: keep\r\n\r\nDATA";
+    assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(req.content_length==4);
+    assert(header_end==strlen(request)-4);
+    assert(http_build_forward_request(&req,"192.0.2.18",forwarded,sizeof(forwarded),&out_len)==0);
+    assert(strstr(forwarded,"POST /ingest?source=test HTTP/1.1\r\n") == forwarded);
+    assert(strstr(forwarded,"Content-Length: 4\r\n")!=NULL);
+    assert(strstr(forwarded,"X-Trace: keep\r\n")!=NULL);
+    assert(strstr(forwarded,"\r\n\r\nDATA")==NULL);
+    assert(out_len==strlen(forwarded));
+  }
+
   puts("test_http: ok"); return 0;
 }
