@@ -25,6 +25,9 @@ int main(void){
       assert(http_parse_request(requests[i],lengths[i],16384,&r,&e)==HTTP_PARSE_BAD_REQUEST);
     const char body[]="POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 3\r\n\r\na\0b";
     assert(http_parse_request(body,sizeof(body)-1,16384,&r,&e)==HTTP_PARSE_OK);
+    assert(e==sizeof(body)-1-3);
+    assert(r.content_length==3);
+    assert(r.header_count==2);
   }
   {
     /* Reject invalid HTTP method tokens without blocking valid extension methods. */
