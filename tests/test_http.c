@@ -270,5 +270,13 @@ int main(void){
     assert(out_len==strlen(forwarded));
   }
 
+  /* Header limits apply to headers, not the accompanying body. */
+  {
+    const char *request = "POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 4\r\n\r\nDATA";
+    size_t boundary = strlen(request)-4;
+    assert(http_parse_request(request,strlen(request),boundary,&req,&header_end)==HTTP_PARSE_OK);
+    assert(header_end==boundary);
+  }
+
   puts("test_http: ok"); return 0;
 }
