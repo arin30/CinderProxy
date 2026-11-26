@@ -278,5 +278,15 @@ int main(void){
     assert(header_end==boundary);
   }
 
+  /* A forwarded header block must end with exactly the HTTP header delimiter. */
+  {
+    const char *request = "GET /status HTTP/1.1\r\nHost: localhost\r\n\r\n";
+    assert(http_parse_request(request,strlen(request),16384,&req,&header_end)==HTTP_PARSE_OK);
+    assert(http_build_forward_request(&req,"192.0.2.19",forwarded,sizeof(forwarded),&out_len)==0);
+    assert(out_len>=4);
+    assert(strcmp(forwarded+out_len-4,"\r\n\r\n")==0);
+    assert(strstr(forwarded,"\r\n\r\n")==forwarded+out_len-4);
+  }
+
   puts("test_http: ok"); return 0;
 }
