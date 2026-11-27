@@ -276,6 +276,7 @@ int main(void){
     size_t boundary = strlen(request)-4;
     assert(http_parse_request(request,strlen(request),boundary,&req,&header_end)==HTTP_PARSE_OK);
     assert(header_end==boundary);
+    assert(http_parse_request(request,strlen(request),boundary-1,&req,&header_end)==HTTP_PARSE_TOO_LARGE);
   }
 
   /* A forwarded header block must end with exactly the HTTP header delimiter. */
